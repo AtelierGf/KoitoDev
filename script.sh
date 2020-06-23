@@ -1,1 +1,0 @@
-/usr/bin/python3 /mnt/c/Users/admin/Desktop/Documents/twitter/main.py
