@@ -13,6 +13,9 @@ def main():
 
     reply_list=["ぴぇ！？","ぴゃ・・・！？","みんな、わたしがいないとだめなんですよー！"]
 
+    with  open(r"./reply_log.txt",mode="w") as f:
+        f
+
     men='https://api.twitter.com/1.1/statuses/mentions_timeline.json' 
     rep="https://api.twitter.com/1.1/statuses/update.json"
 
