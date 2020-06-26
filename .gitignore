@@ -1,0 +1,5 @@
+.env
+*.sh
+*.pyc
+ng_word.py
+*.log

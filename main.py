@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 import json,config,random
 from requests_oauthlib import OAuth1Session
+import ng_word
 
 def main():
 
@@ -37,7 +39,7 @@ def main():
         for one in trend["trends"]:
             trend_list.append(one["name"].lstrip('#'))
 
-    #trend_list=list(filter(trend_list,))
+    trend_list=ng_word.filtering(trend_list)
     important=trend_list[random.randint(0,len(trend_list))]
 
     r=random.randint(0,1)
