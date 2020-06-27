@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
-import json,config,random
+# -*- cod1ing:utf-8 -*-
+import MeCab 
+import json,config,random,re
 from requests_oauthlib import OAuth1Session
-import re
 import ng_word
 
 def main():
-
     CKey=config.TW_CONSUMER_KEY.strip()
     CSKey=config.TW_CONSUMER_SECRET.strip()
     TKey=config.TW_TOKEN.strip()
@@ -13,51 +12,45 @@ def main():
 
     twitter=OAuth1Session(CKey,CSKey,TKey,TSKey)
 
-    trend_url = 'https://api.twitter.com/1.1/trends/place.json'
+    home_url="https://api.twitter.com/1.1/statuses/home_timeline.json"
     update_url = "https://api.twitter.com/1.1/statuses/update.json"
-    follower_url = "https://api.twitter.com/1.1/followers/ids.json"
-    user_tl_url = "https://api.twitter.com/1.1/statuses/user_timeline.json"
-    
+
     dame="{}、わたしがいないとだめなんですよー！"
     yoyu="い、いえ！{}はよゆーですよ\n全然平気です！"
-    template=[dame,yoyu]
-    trend_list=[]
+    watashi="わ、わたしも・・・・・・！\n{}がいないとだめだめかもしれないです・・・・・・"
 
-    res=twitter.get(trend_url,params={"id":23424856})
+    template=[dame,yoyu,watashi] 
 
-    follower=twitter.get(follower_url)
-    ids=(json.loads(follower.text))["ids"]
-    p = re.compile('[\u3041-\u309F]+')
-    for i in ids[0:10]:
-        timeline=twitter.get(user_tl_url,params={"user_id":i})
-        if res.status_code == 200:
-            for tweet in ((json.loads(timeline.text))):
-                print(p.search(tweet["text"]))
-        else:
-            print("Failed : %d"% res.status_code)
- 
+    #t=MeCab.Tagger(r"-Ochasen -d /home/senk/local/mecab-dic/ipadic-utf8")
+    #t=MeCab.Tagger('-Ochasen -d /usr/lib/x86_64-linux-gnu/mecab/dic/mecab-ipadic-neologd') 
+    t.parse("")
 
+    res=twitter.get(home_url)
     if res.status_code == 200:
-        print("Success!")
-        response=json.loads(res.text)
+        timeline=(json.loads(res.text))
+        tweet = timeline[random.randint(0,len(timeline)-1)]
+        m = t.parseToNode((tweet["text"]))
+        nouns = []
+        while m:
+            if m.feature.split(',')[0] == '名詞':
+                nouns.append(m.surface)
+            m = m.next
 
-        for trends in response:
-            for trend in trends["trends"]:
-                trend_list.append(trend["name"].lstrip('#'))
+        print(nouns)
+        nouns=ng_word.filtering(nouns)
+        r1=random.randint(0,2)
+        r2=random.randint(0,len(nouns)-1)
+        tweet={"status":template[r1].format(nouns[r2])}
 
-        trend_list=ng_word.filtering(trend_list)
-        to_be_embedded=trend_list[random.randint(0,len(trend_list))]
+        print(tweet)
+#        res=twitter.post(update_url,params=tweet)
+#        if res.status_code == 200:
+#            print("Success!")
+#        else:
+#            print("Failed : %d"% res.status_code)
 
-        r=random.randint(0,1)
-        tweet={"status":template[r].format(to_be_embedded)}
-
-       #res=twitter.post(update_url,params=tweet)
-        if res.status_code == 200:
-            print("Success!")
-        else:
-            print("Failed : %d"% res.status_code)
     else:
-        print("Failed : %d"% res.status_code)
+        print("Failed: %d"% res.status_code)
 
 if __name__=='__main__':
     main()
