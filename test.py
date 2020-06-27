@@ -17,18 +17,19 @@ def main():
 
     dame="{}、わたしがいないとだめなんですよー！"
     yoyu="い、いえ！{}はよゆーですよ\n全然平気です！"
-    #yoyu="{}テスト2"
-    template=[dame,yoyu] 
+    watashi="わ、わたしも・・・・・・！\n{}がいないとだめだめかもしれないです・・・・・・"
 
-   # t=MeCab.Tagger("-Ochasen-d /usr/local/lib/mecab/dic/mecab-ipadic-neologd")
-    t=MeCab.Tagger('-Ochasen -d /usr/lib/x86_64-linux-gnu/mecab/dic/mecab-ipadic-neologd') 
-    t.parse("")
+    template=[dame,yoyu,watashi] 
+
+    t=MeCab.Tagger(r"-Ochasen -d /home/senk/local/mecab-dic/ipadic-utf8")
+    #t=MeCab.Tagger('-Ochasen -d /usr/lib/x86_64-linux-gnu/mecab/dic/mecab-ipadic-neologd') 
 
     res=twitter.get(home_url)
     if res.status_code == 200:
         timeline=(json.loads(res.text))
         tweet = timeline[random.randint(0,len(timeline)-1)]
-        m = t.parseToNode(tweet["text"])
+        t.parse("")
+        m = t.parseToNode((tweet["text"]))
         nouns = []
         while m:
             if m.feature.split(',')[0] == '名詞':
@@ -36,17 +37,17 @@ def main():
             m = m.next
 
         nouns=ng_word.filtering(nouns)
-        r1=random.randint(1,1)
+        r1=random.randint(0,2)
         r2=random.randint(0,len(nouns)-1)
         tweet={"status":template[r1].format(nouns[r2])}
 
-        print(tweet["status"])
+#        print(tweet["status"])
 
-#        res=twitter.post(update_url,params=tweet)
-#        if res.status_code == 200:
-#            print("Success!")
-#        else:
-#            print("Failed : %d"% res.status_code)
+        res=twitter.post(update_url,params=tweet)
+        if res.status_code == 200:
+            print("Success!")
+        else:
+            print("Failed : %d"% res.status_code)
 
     else:
         print("Failed: %d"% res.status_code)
