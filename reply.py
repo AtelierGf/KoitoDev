@@ -1,5 +1,4 @@
-import json,config
-import random
+import json,config,random
 from requests_oauthlib import OAuth1Session
 
 def main():
@@ -13,51 +12,50 @@ def main():
 
     reply_list=["ぴぇ！？","ぴゃ・・・！？","みんな、わたしがいないとだめなんですよー！"]
 
-    with  open(r"./reply_log.txt",mode="w") as f:
-        f
+#    with open(r"./reply_log.txt",mode="r") as f:
+#        temp=f.readline()
+#        since_id=temp if temp!="" else 1
 
-    men='https://api.twitter.com/1.1/statuses/mentions_timeline.json' 
-    rep="https://api.twitter.com/1.1/statuses/update.json"
-
+    mention_url='https://api.twitter.com/1.1/statuses/mentions_timeline.json' 
+    update_url="https://api.twitter.com/1.1/statuses/update.json"
     params={"count":5}
-    res=twitter.get(men,params=params)
 
+    res=twitter.get(mention_url,params=params)
     if res.status_code == 200:
-        print("Success.")
+        print("Success getting mention!")
+        mentions=json.loads(res.text)
+
+        print(mentions)
+        for mention in mentions:
+            '''
+            replying_tweet_id = tweet id replying now
+            user_name = replied me user @screenname
+            '''
+            #get information to reply and record this id.
+            target_tweet_id=mention["id"]
+            user_name=mention["user"]["screen_name"]
+            with  open(r"./reply_log.txt",mode="w") as f:
+                print(target_tweet_id) 
+                f.write(str(target_tweet_id))
+
+            #generate reply text
+            r=random.randint(0,len(reply_list)-1)
+            reply_text="@"+user_name+"\n"+reply_list[r]
+            tweet={"status":reply_text,"in_reply_to_status_id":target_tweet_id}
+
+            #attempt a post request.
+            res=twitter.post(update_url,params=tweet)
+            if res.status_code == 200:
+                print("Success!")
+            else:
+                print("Failed : %d"% res.status_code)
     else:
         print("Failed. : %d"% res.status_code)
 
-    mentions=json.loads(res.text)
-    mention_me=False
-
-    for mention in mentions:
-        '''
-        target = tweet id replying
-        user = replied user @hogehoge
-        '''
-
         #determine reply to me.
-        mention_me=False
-        for user in mention["entities"]["user_mentions"]:
-            if user["screen_name"] == "TrendKoito":
-                mention_me=True
-
-        #If reply to me, reply.
-        if mention_me:
-            target=mention["id"]
-            user=mention["user"]["screen_name"]
-            r=random.randint(0,len(reply_list)-1)
-            text="@"+user+"\n"+reply_list[r]
-            tweet={"status":text,"in_reply_to_status_id":target}
-            res=twitter.post(rep,params=tweet)
-            if res.status_code == 200:
-                print("Success.")
-            else:
-                print("Failed. : %d"% res.status_code)
-
-
-
-    #MyId=t.users.show(screen_name=User)["id"]
+        #for user in mention["entities"]["user_mentions"]:
+            #if user["screen_name"] == "TrendKoito":
+                #mention_me=True
 
 if __name__=='__main__':
     main()

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json,config,random
 from requests_oauthlib import OAuth1Session
+import re
 import ng_word
 
 def main():
@@ -11,45 +12,52 @@ def main():
     TSKey=config.TW_TOKEN_SECRET.strip()
 
     twitter=OAuth1Session(CKey,CSKey,TKey,TSKey)
- 
-    trend_get = 'https://api.twitter.com/1.1/trends/place.json'
-    update = "https://api.twitter.com/1.1/statuses/update.json"
+
+    trend_url = 'https://api.twitter.com/1.1/trends/place.json'
+    update_url = "https://api.twitter.com/1.1/statuses/update.json"
+    follower_url = "https://api.twitter.com/1.1/followers/ids.json"
+    user_tl_url = "https://api.twitter.com/1.1/statuses/user_timeline.json"
     
     dame="{}、わたしがいないとだめなんですよー！"
     yoyu="い、いえ！{}はよゆーですよ\n全然平気です！"
-
     template=[dame,yoyu]
-
-    res=None
-    retry=0
-    while(retry<100):
-        res=twitter.get(trend_get,params={"id":23424856})
-
-        if res.status_code == 200:
-            print("Success.")
-            break
-        else:
-            print("Failed. : %d"% res.status_code)
-            retry+=1
-
     trend_list=[]
-    trends=json.loads(res.text)
 
-    for trend in trends:
-        for one in trend["trends"]:
-            trend_list.append(one["name"].lstrip('#'))
+    res=twitter.get(trend_url,params={"id":23424856})
 
-    trend_list=ng_word.filtering(trend_list)
-    important=trend_list[random.randint(0,len(trend_list))]
+    follower=twitter.get(follower_url)
+    ids=(json.loads(follower.text))["ids"]
+    p = re.compile('[\u3041-\u309F]+')
+    for i in ids[0:10]:
+        timeline=twitter.get(user_tl_url,params={"user_id":i})
+        if res.status_code == 200:
+            for tweet in ((json.loads(timeline.text))):
+                print(p.search(tweet["text"]))
+        else:
+            print("Failed : %d"% res.status_code)
+ 
 
-    r=random.randint(0,1)
-    tweet={"status":template[r].format(important)}
-
-    res=twitter.post(update,params=tweet)
     if res.status_code == 200:
-        print("Success.")
+        print("Success!")
+        response=json.loads(res.text)
+
+        for trends in response:
+            for trend in trends["trends"]:
+                trend_list.append(trend["name"].lstrip('#'))
+
+        trend_list=ng_word.filtering(trend_list)
+        to_be_embedded=trend_list[random.randint(0,len(trend_list))]
+
+        r=random.randint(0,1)
+        tweet={"status":template[r].format(to_be_embedded)}
+
+       #res=twitter.post(update_url,params=tweet)
+        if res.status_code == 200:
+            print("Success!")
+        else:
+            print("Failed : %d"% res.status_code)
     else:
-        print("Failed. : %d"% res.status_code)
+        print("Failed : %d"% res.status_code)
 
 if __name__=='__main__':
     main()
