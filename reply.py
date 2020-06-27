@@ -10,7 +10,7 @@ def main():
     twitter=OAuth1Session(CKey,CSKey,TKey,TSKey)
 
     log_path=os.getcwd()+"/reply_log.txt"
-    reply_list=["ぴぇ！？","ぴゃ・・・！？","みんな、わたしがいないとだめなんですよー！"]
+    reply_list=["ぴぇ！？","ぴゃ・・・！？","い、いえ！わたしはよゆーですよ\n全然平気です！"]
     params={"count":5}
 
     with open(log_path,mode="r") as f:
@@ -23,6 +23,8 @@ def main():
     update_url="https://api.twitter.com/1.1/statuses/update.json"
 
     res=twitter.get(mention_url,params=params)
+    replied_id=[]
+
     if res.status_code == 200:
         print("Success getting mention!")
         mentions=json.loads(res.text)
@@ -41,18 +43,20 @@ def main():
             tweet={"status":reply_text,"in_reply_to_status_id":target_tweet_id}
             print(tweet)
 
-            with open(log_path,mode="w") as f:
-                print(target_tweet_id)
-                f.write(str(target_tweet_id))
-
-            #attempt a post request.
-#            res=twitter.post(update_url,params=tweet)
-#            if res.status_code == 200:
-#                print("Success!")
-#            else:
-#                print("Failed : %d"% res.status_code)
+            replied_id.append(target_tweet_id)
+   #        attempt a post request.
+            res=twitter.post(update_url,params=tweet)
+            if res.status_code == 200:
+                print("Success!")
+            else:
+                print("Failed : %d"% res.status_code)
     else:
         print("Failed. : %d"% res.status_code)
+
+    if replied_id !=[]:
+        with open(log_path,mode="w") as f:
+            replied_id=sorted(replied_id)
+            f.write(str(replied_id[-1]))
 
 if __name__=='__main__':
     main()
