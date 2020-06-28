@@ -9,7 +9,7 @@ def main():
     User=config.USER.strip()
     twitter=OAuth1Session(CKey,CSKey,TKey,TSKey)
 
-    log_path=os.getcwd()+"/reply_log.txt"
+    log_path=config.REPLY_LOG_PATH.strip()
     reply_list=["ぴぇ！？","ぴゃ・・・！？","い、いえ！わたしはよゆーですよ\n全然平気です！"]
     params={"count":5}
 
@@ -41,7 +41,6 @@ def main():
             r=random.randint(0,len(reply_list)-1)
             reply_text="@"+user_name+"\n"+reply_list[r]
             tweet={"status":reply_text,"in_reply_to_status_id":target_tweet_id}
-            print(tweet)
 
             replied_id.append(target_tweet_id)
    #        attempt a post request.
