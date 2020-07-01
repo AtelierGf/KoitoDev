@@ -12,7 +12,7 @@ tl="https://api.twitter.com/1.1/statuses/user_timeline.json"
 des="https://api.twitter.com/1.1/statuses/destroy/{}.json"
 
 twitter=OAuth1Session(CKey,CSKey,TKey,TSKey)
-res=twitter.get(tl,params={"count":100,"screen_name":"TrendKoito"})
+res=twitter.get(tl,params={"count":100,"screen_name":User})
 
 if res.status_code == 200:
     timeline=json.loads(res.text)
