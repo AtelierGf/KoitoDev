@@ -34,6 +34,7 @@ def main():
             user_name = replied me user @screenname
             '''
             #get information to reply and record this id.
+            if mention["user"]["screen_name"]==User: continue
             target_tweet_id=mention["id"]
             user_name=mention["user"]["screen_name"]
 
