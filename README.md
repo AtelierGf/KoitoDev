@@ -1,2 +1,2 @@
-# KoitoDev
+# koito_bot
 koito bot
