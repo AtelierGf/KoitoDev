@@ -1,4 +1,5 @@
 # -*- cod1ing:utf-8 -*-
+import jaconv
 import MeCab 
 import json,config,random,re,time
 from requests_oauthlib import OAuth1Session
@@ -21,18 +22,19 @@ def main():
     t.parse("")
 
     #declare tweet utils
-    placeholder_1=["{}、わたしがいないとだめなんですよー！","わ、わたしも・・・・・・！\n{}がいないとだめだめかもしれないです・・・・・・"]
-    placeholder_2=["{}、わたしがいないと{}なんですよー！","わ、わたしも・・・・・・！\n{}がいないと{}かもしれないです・・・・・・"]
-    template=random.choice([placeholder_1,placeholder_2])
+    pattern1="{}、わたしがいないとだめなんですよー！"
+    pattern2="わ、わたしも・・・・・・！\n{}がいないとだめだめかもしれないです・・・・・・"
+    pattern3="みんな、{}がいないとだめなんですよー！",
+    pattern4="{}も・・・・・・！\nプロデューサーさんがいないとだめだめかもしれないです・・・・・・"
+    template=random.choice([pattern1,pattern2,pattern3,pattern4])
 
     removing = re.compile('[1-9a-z!"#$%&\'\\\\()*+,-./:;<=>?@[\\]^_`{|}~「」〔〕“”〈〉『』【】＆＊・（）＄＃＠。、？！｀＋￥％ー回時間分人週０１２３４５６７８９…。]+')
     url_pattern=re.compile("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+")
 
     nouns=[]
-    adjs=[]
 
     while True:
-      res=twitter.get(home_url,params={"count":10})
+      res=twitter.get(home_url,params={"count":30})
       if res.status_code == 200:
         timeline=list(filter(lambda line:line["retweet_count"]==0 and line["in_reply_to_user_id"]==None,json.loads(res.text)))
         random.shuffle(timeline)
@@ -45,11 +47,9 @@ def main():
             noun = ""
             while m:
                 features=m.feature.split(',')
-                print(features)
                 if features[0] == '名詞' and features[1]=='固有名詞':
+                    if (noun=="" and template==pattern4):noun+=jaconv.kata2hira(features[7][0])+"、"
                     noun+=m.surface
-                elif features[0] == '形容詞':
-                    adjs.append(m.surface)
                 else:
                     #名詞が続く限り、一つの名詞とする。
                     if noun!="" :
@@ -58,31 +58,31 @@ def main():
                 m = m.next
 
         nouns = [nouns[i] for i in range(len(nouns)) if not removing.fullmatch(nouns[i][1]) and 1<len(nouns[i][1])]
-        adjs = [adjs[i] for i in range(len(adjs)) if not removing.fullmatch(adjs[i]) and 1<len(adjs[i])]
-
-        print(nouns)
-        print(adjs)
 
         #If getting nouns and adjs succeed, then this loop break.
-        if nouns!=[] or adjs!=[]:
+        if nouns!=[]:
            break
         time.sleep(1)
       else:
         print("Failed: %d"% res.status_code)
 
-    which=random.randint(0,1)
-    tweet={"status":template[which].format(random.choice(nouns)[1],random.choice(adjs))}
+    noun=random.choice(nouns)
+    tweet={"status":template.format(noun[1])}
 
+    print(tweet)
+
+'''
     res1=twitter.post(update_url,params=tweet)
     if res1.status_code == 200:
       print("tweet:Success!")
-      res2=twitter.post(fav_url,params={"id":nouns[r2][0]})
+      res2=twitter.post(fav_url,params={"id":noun[0]})
       if res2.status_code == 200:
         print("fav:Success!")
       else:
        print("fav:Failed %d"% res2.status_code)
     else:
       print("fav:Failed : %d"% res1.status_code)
+'''
 
 if __name__=='__main__':
     main()
